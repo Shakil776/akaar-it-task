@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
-use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,16 +19,8 @@ use Illuminate\Support\Facades\DB;
 Route::match(['get', 'post'], '/', [CustomerController::class, 'import_csv_data'])->name('import');
 
 // stored procedure
-Route::get('call-procedure', function () {
-  
-    $gender = 'M';
 
-    $getCount = DB::select('CALL get_count('.$gender.')');
-
-  	return $getCount;
-      
-});
-
+Route::match(['get', 'post'], '/call-procedure', [CustomerController::class, 'call_procedure'])->name('call-procedure');
 
 // task 2
 Route::match(['get', 'post'], '/task2', [CustomerController::class, 'task2'])->name('task2');

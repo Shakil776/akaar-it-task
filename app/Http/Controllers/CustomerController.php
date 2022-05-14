@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Jobs\CustomerCsvData;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use File;
 
 class CustomerController extends Controller
 {
@@ -80,75 +81,88 @@ class CustomerController extends Controller
         }
     }
 
+    // call procedure
+    public function call_procedure()
+    {
+
+        //$getCount = DB::select('CALL sp_GetMovies()');
+        $getCount = DB::select('CALL GetCounts()');
+        return $getCount;
+        //$getCount = DB::select("CALL sp_GetMoviesByRating('F')");
+        //$query = DB::select("CALL sp_CountMoviesByRating_Inout(@T, 'M');");
+
+
+        //passing dynamic data in the procedure
+        $query = "CALL sp_CountMoviesByRating_Inout(@T, 'F');";
+
+        $bind = [
+            'F' => 'F'
+        ];
+
+        DB::statement($query, $bind);
+
+        //getting the data from the variable in the procedure
+        $return_query = "SELECT @T AS total";
+
+        $result = DB::select($return_query);
+        DB::statement($return_query);
+
+        return $result;
+    }
+
 
     // task 2
     public function task2()
     {
-        // Array Which Store Data
-        $companies = [];
+        $file = public_path('task.csv');
 
-        // Read CSV file
-        if (($open = fopen(public_path('task.csv'), "r")) !== FALSE) {
+        $data = $this->csvToArray($file);
 
-            // Store File in array 
-            while (($data = fgetcsv($open, 1000, ",")) !== FALSE) {
-                $companies[] = $data;
-            }
-            
-            // close The File
-            fclose($open);
-        }
+        foreach ($data as $key => $info) {
 
-
-        // $f_pointer=fopen(public_path('task.csv'), "r"); // file pointer
-
-        // while(! feof($f_pointer)){
-        //     $ar=fgetcsv($f_pointer);
-            
-        //     echo $ar[0] .'---'. $ar[1];
-        //     echo "<br>";
-        // }
-
-
-        // die;
-
-        // Show output in Array
-
-        // return $companies;
-
-
-
-        // Access The Array 
-        foreach ($companies as $companie ) {
-            return $companie;
-            // code
-            $companieName = $companie[0];
-            $companieFile = $companie[1];
-
-            // Remove space from companie name
-            $companieName = str_replace(' ', '_', $companieName);
-
-            echo "<pre>";
-
-            print_r($companieName); die();
+            $company_name = $info['Name'];
+            $company_number = $info['Number'];
 
             $fileExtension = '.pdf';
 
-            $path = public_path().'/File/'.$companieFile.$fileExtension;
-
-            
-
+            $path = public_path().'/File/'.$company_number.$fileExtension;     
+ 
             // Check Array File Exist in File
-            // if (file_exists($path)) {
-            //     // Check File Already Moved in the 
-            //     if (!file_exists('result/'.$companieName.'/'.$companieFile.$fileExtension)) {
+            if (File::exists($path)) {
+                // Check File Already Moved in the 
+                if (!File::exists(public_path($company_name).'/'.$company_number.$fileExtension)) {
+                    File::makeDirectory(public_path($company_name), 0777, true, true);
+                    File::move($path, public_path($company_name.'/'.$company_number.$fileExtension));
+                }
 
-            //         // Code For File Move or Store
-
-
-            //     }
-            // }
+            }
         }
+
+        return 'Success';  
+
+    }
+
+    // helper function for convert csv to array
+    public function csvToArray($filename = '', $delimiter = ',')
+    {
+        if (!file_exists($filename) || !is_readable($filename))
+            return false;
+
+        $header = null;
+        $data = array();
+        if (($handle = fopen($filename, 'r')) !== false)
+        {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false)
+            {
+                if (!$header)
+                    $header = $row;
+                else
+                    $data[] = array_combine($header, $row);
+            }
+            fclose($handle);
+        }
+
+        return $data;
     }
 
 }
