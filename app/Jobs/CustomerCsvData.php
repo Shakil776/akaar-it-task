@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Carbon\Carbon;
 
 class CustomerCsvData implements ShouldQueue
 {
@@ -41,5 +42,8 @@ class CustomerCsvData implements ShouldQueue
             $data = array_combine($this->header, $customer);
             Customer::create($data);
         }
+
+        // dispatch jobs for send mail after complete export csv file
+        dispatch(new SendMailJob())->delay(Carbon::now()->addSeconds(30));
     }
 }

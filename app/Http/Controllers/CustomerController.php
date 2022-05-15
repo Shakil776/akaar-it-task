@@ -12,6 +12,11 @@ use File;
 
 class CustomerController extends Controller
 {
+    // index
+    public function index()
+    {
+        return view('index');
+    }
     // csv records import
     public function import_csv_data(Customer $customer, Request $request)
     {
@@ -74,72 +79,50 @@ class CustomerController extends Controller
 
             return view('table', compact('customers'));
         }
-        else
-        {
-            $customers = Customer::orderBy('id', 'DESC')->paginate(100);   
-            return view('show', compact('customers'));
-        }
+        
+        $customers = Customer::orderBy('id', 'DESC')->paginate(100);   
+        return view('show', compact('customers'));
     }
 
     // call procedure
     public function call_procedure()
     {
-
-        //$getCount = DB::select('CALL sp_GetMovies()');
-        $getCount = DB::select('CALL GetCounts()');
-        return $getCount;
-        //$getCount = DB::select("CALL sp_GetMoviesByRating('F')");
-        //$query = DB::select("CALL sp_CountMoviesByRating_Inout(@T, 'M');");
-
-
-        //passing dynamic data in the procedure
-        $query = "CALL sp_CountMoviesByRating_Inout(@T, 'F');";
-
-        $bind = [
-            'F' => 'F'
-        ];
-
-        DB::statement($query, $bind);
-
-        //getting the data from the variable in the procedure
-        $return_query = "SELECT @T AS total";
-
-        $result = DB::select($return_query);
-        DB::statement($return_query);
-
-        return $result;
+        $result = DB::select('CALL GetCounts()');
+        return view('stored_procedure', compact('result'));
     }
 
 
-    // task 2
-    public function task2()
+    // file transfer
+    public function file_transfer(Request $request)
     {
-        $file = public_path('task.csv');
+        if ($request->isMethod('post')){
+            $file = public_path('task.csv');
+            // convert csv file to array data
+            $data = $this->csvToArray($file);
 
-        $data = $this->csvToArray($file);
-
-        foreach ($data as $key => $info) {
-
-            $company_name = $info['Name'];
-            $company_number = $info['Number'];
-
-            $fileExtension = '.pdf';
-
-            $path = public_path().'/File/'.$company_number.$fileExtension;     
- 
-            // Check Array File Exist in File
-            if (File::exists($path)) {
-                // Check File Already Moved in the 
-                if (!File::exists(public_path($company_name).'/'.$company_number.$fileExtension)) {
-                    File::makeDirectory(public_path($company_name), 0777, true, true);
-                    File::move($path, public_path($company_name.'/'.$company_number.$fileExtension));
+            foreach ($data as $key => $info) {
+                // get company name and number
+                $company_name = $info['Name'];
+                $company_number = $info['Number'];
+                $fileExtension = '.pdf';
+                // generate pdf file path
+                $path = public_path().'/File/'.$company_number.$fileExtension;     
+     
+                // check file exist or not
+                if (File::exists($path)) {
+                    // Check directory
+                    if (!File::exists(public_path($company_name).'/'.$company_number.$fileExtension)) {
+                        // make directory in not exists
+                        File::makeDirectory(public_path($company_name), 0777, true, true);
+                        // move file from directory to directory
+                        File::move($path, public_path($company_name.'/'.$company_number.$fileExtension));
+                    }
                 }
-
             }
+            return back()->with('message', 'File transfer successfully.');
         }
 
-        return 'Success';  
-
+        return view('file_transfer');  
     }
 
     // helper function for convert csv to array

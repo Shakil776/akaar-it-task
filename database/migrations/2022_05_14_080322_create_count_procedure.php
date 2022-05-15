@@ -13,21 +13,24 @@ class CreateCountProcedure extends Migration
      */
     public function up()
     {
-        // $procedure = "DROP PROCEDURE IF EXISTS `get_count`;
-        //     CREATE PROCEDURE get_count
-        //     (
-        //         IN branchId INT
-        //     )
+        $procedure = "DROP PROCEDURE IF EXISTS `GetCounts`;
+            CREATE PROCEDURE GetCounts()
 
-        //     BEGIN
+            BEGIN
 
-        //         SELECT COUNT(*) AS count
-        //         FROM customers
-        //         WHERE branch_id = branchId AND gender = 'M';
+                SELECT COUNT(*) as total_customer from customers GROUP BY branch_id 
 
-        //     END;";
+                UNION
+    
+                SELECT COUNT(*) AS total_male_customer from customers WHERE gender = 'M' GROUP BY branch_id
+
+                UNION
+
+                SELECT COUNT(*) AS total_female_customer from customers WHERE gender = 'F' GROUP BY branch_id;
+
+            END;";
   
-        // \DB::unprepared($procedure);
+        \DB::unprepared($procedure);
     }
 
     /**

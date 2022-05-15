@@ -14,13 +14,14 @@ use App\Http\Controllers\CustomerController;
 |
 */
 
+// home route
+Route::get('/', [CustomerController::class, 'index'])->name('index');
 
 // import csv file records
-Route::match(['get', 'post'], '/', [CustomerController::class, 'import_csv_data'])->name('import');
+Route::match(['get', 'post'], 'import', [CustomerController::class, 'import_csv_data'])->name('import');
 
 // stored procedure
+Route::match(['get', 'post'], 'call-procedure', [CustomerController::class, 'call_procedure'])->name('call-procedure');
 
-Route::match(['get', 'post'], '/call-procedure', [CustomerController::class, 'call_procedure'])->name('call-procedure');
-
-// task 2
-Route::match(['get', 'post'], '/task2', [CustomerController::class, 'task2'])->name('task2');
+// task 2 file transfer
+Route::match(['get', 'post'], 'file-transfer', [CustomerController::class, 'file_transfer'])->name('file-transfer');
